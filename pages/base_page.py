@@ -1,4 +1,4 @@
-from .locators import BasePageLocators
+from .locators import BasePageLocators, BasketPageLocators
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.common.exceptions import TimeoutException
@@ -12,6 +12,10 @@ class BasePage:
         self.browser = browser
         self.url = url
         self.browser.implicitly_wait(timeout)
+
+    def go_to_basket_page(self):
+        basket_link = self.browser.find_element(*BasketPageLocators.BASKET_LINK)
+        basket_link.click()
 
     def go_to_login_page(self):
         login_link = self.browser.find_element(*BasePageLocators.LOGIN_LINK)
