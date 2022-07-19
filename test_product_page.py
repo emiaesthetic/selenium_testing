@@ -1,7 +1,38 @@
 import pytest
+import time
+from faker import Faker
 from .pages.product_page import ProductPage
 from .pages.login_page import LoginPage
+from .pages.basket_page import BasketPage
+from .pages.main_page import MainPage
 
+@pytest.mark.product
+class TestUserAddToBasketFromProductPage:
+
+    @pytest.fixture(scope="function", autouse=True)
+    def setup(self, browser):
+        link = "http://selenium1py.pythonanywhere.com/ru/accounts/login/"
+        page = LoginPage(browser, link)
+        page.open()
+        f = Faker()
+        email = f.email()
+        password = str(time.time())
+        page.register_new_user(email, password)
+        page.should_be_authorized_user()
+
+    def test_user_cant_see_success_message(self, browser):
+        link = "http://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/"
+        page = ProductPage(browser, link)
+        page.open()
+        page.should_not_be_success_message()
+
+    def test_user_can_add_product_to_basket(self, browser):
+        link = "http://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/"
+        page = ProductPage(browser, link)
+        page.open()
+        page.add_to_basket()
+        page.should_be_names_match()
+        page.should_be_price_match()
 
 @pytest.mark.parametrize('promo_offer', ["0", "1", "2", "3", "4", "5", "6",
                                          pytest.param("7", marks=pytest.mark.xfail), "8", "9"])
@@ -14,6 +45,21 @@ def test_guest_can_add_product_to_basket(browser, promo_offer):
     page.should_be_names_match()
     page.should_be_price_match()
 
+def test_guest_cant_see_product_in_basket_opened_from_main_page(browser):
+    link = "http://selenium1py.pythonanywhere.com"
+    page = MainPage(browser, link)
+    page.open()
+    page.go_to_basket_page()
+    basket_page = BasketPage(browser, browser.current_url)
+    basket_page.should_be_basket_page()
+
+def test_guest_cant_see_product_in_basket_opened_from_product_page(browser):
+    link = "http://selenium1py.pythonanywhere.com/catalogue/"
+    page = ProductPage(browser, link)
+    page.open()
+    page.go_to_basket_page()
+    basket_page = BasketPage(browser, browser.current_url)
+    basket_page.should_be_basket_page()
 
 @pytest.mark.xfail
 def test_guest_cant_see_success_message_after_adding_product_to_basket(browser):
@@ -23,13 +69,11 @@ def test_guest_cant_see_success_message_after_adding_product_to_basket(browser):
     page.add_to_basket()
     page.should_not_be_success_message()
 
-
 def test_guest_cant_see_success_message(browser):
     link = "http://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/"
     page = ProductPage(browser, link)
     page.open()
     page.should_not_be_success_message()
-
 
 @pytest.mark.xfail
 def test_message_disappeared_after_adding_product_to_basket(browser):
